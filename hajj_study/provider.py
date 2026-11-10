@@ -13,6 +13,31 @@ from dataclasses import dataclass
 from urllib import error, request
 from urllib.parse import quote
 
+from hajj_study.schemas import ContractError
+
+
+_ALLOWED_VALIDATION_CODES = frozenset({
+    'VALIDATION_FAILED',
+    'FINAL_REPORT_SCHEMA_MISMATCH',
+    'INVALID_RISK_LEVEL',
+    'INVALID_FLAGS_COUNT',
+    'INVALID_FLAG_STRUCTURE',
+    'INVALID_FLAG_VALUE',
+    'INVALID_FLAG_REASON',
+    'DUPLICATE_FLAG',
+    'INVALID_EVIDENCE_COUNT',
+    'INVALID_EVIDENCE_TEXT',
+    'FORBIDDEN_AGENT_TERM',
+})
+
+
+def _validation_error_code(exc):
+    if isinstance(exc, json.JSONDecodeError):
+        return "INVALID_JSON"
+    if isinstance(exc, ContractError) and exc.code in _ALLOWED_VALIDATION_CODES:
+        return exc.code
+    return "VALIDATION_FAILED"
+
 
 class ProviderError(RuntimeError):
     def __init__(self, reason: str, *, category='PROVIDER_ERROR', retryable=False,
@@ -176,7 +201,8 @@ class GeminiProvider:
                                      'finish_reason': result.finish_reason,
                                      'model_version': result.model_version,
                                      'usage': result.usage, 'elapsed_ms': result.elapsed_ms,
-                                     'response_sha256': result.response_sha256})
+                                     'response_sha256': result.response_sha256,
+                                     'validation_error_code': _validation_error_code(exc)})
                     failure = ProviderError('Malformed/invalid structured report',
                                             category='INVALID_REPORT', retryable=True,
                                             usage=result.usage, finish_reason=result.finish_reason)
