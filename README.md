@@ -10,7 +10,7 @@ Controlled comparison of Single-Agent and Multi-Agent risk classification using 
 
 Both conditions use the same cases, shared ML predictions, decision policy, Gemini configuration, and seeds (11, 42, 77).
 
-The main experimental difference is the agent organization: one generalist versus three specialists and one coordinator.
+The main experimental difference is the agent organization: one generalist versus three specialists and one coordinator. The Multi-Agent design also entails more role invocations, so operational costs are an observed consequence of the architecture, not a separately controlled factor.
 
 ## Setup
 
@@ -43,7 +43,7 @@ To run the offline tests using the existing environment:
 
 These tests do not require new Gemini API calls. Tests that depend on unavailable private files may be skipped.
 
-In the reviewed local environment, 134 tests were discovered: 133 passed and one was skipped because private files were unavailable.
+In the reviewed local environment, 134 tests were discovered: 133 passed and one was skipped because private files were unavailable. The skipped class-level integration fixture also prevented its six dependent integration test methods from executing; these methods must not be reported as passed.
 
 ## Run
 
@@ -116,7 +116,11 @@ The following results are from the original recorded experiment.
 | API attempts/case | 1.411 ± 0.038 | 5.156 ± 0.506 |
 | Recorded execution time | 1.870 ± 0.280 s | 12.853 ± 0.263 s |
 
-Percentages and per-case measures use mean ± sample SD across three seeds; correct decisions are totals. The timing excludes deliberate pacing delays.
+Percentages and per-case measures use mean ± sample SD across three seeds; correct decisions are totals across 30 Test cases × 3 seeds = 90 primary evaluations per condition. The additional 27 clean-reference runs per condition are separate from this primary denominator. The timing excludes deliberate pacing delays.
+
+**Measurement definitions:** Coverage = issued decisions / all primary Test evaluations; selective error = incorrect issued decisions / issued decisions; correct decisions = correct issued outcomes / all 90 primary evaluations. `API attempts/case` includes provider retries and is distinct from logical agent-role calls per case. The private M6 scoring artifact records both measures; logical-call values are not reproduced here without independently checking that artifact.
+
+**Timing qualification:** Recorded execution time measures the observed workflow rather than pure model service latency. The Multi-Agent path persists per-call checkpoints within the measured interval, so orchestration and file-I/O overhead are not matched exactly across conditions. Provider service time and full recorded execution time are separate metrics in the private scoring artifact.
 
 A complete monetary cost was unavailable because 42 Multi-Agent attempts had incomplete token usage metadata.
 
@@ -128,13 +132,27 @@ The Multi-Agent system achieved higher coverage, but also higher selective error
 
 Higher coverage does not necessarily mean better decision quality. The results do not demonstrate that the Multi-Agent architecture outperformed the Single-Agent baseline overall.
 
+### Additional Operational Metrics
+
+The M2 proposal defines additional safety and trajectory metrics, calculated by the scoring implementation and retained in the private M6 score artifact. Their numerical values are not asserted here because the original private score file and reference labels are not available in this public repository.
+
+| Metric | Definition |
+|---|---|
+| Unsupported escalation | Issued risk levels above the proxy reference level / all issued decisions. |
+| Under-escalation | Issued risk levels below the proxy reference level / all issued decisions. |
+| Disrupted-case detection | Corruption-changed raw decisions that were flagged / all corruption-changed raw decisions. |
+| Clean-decision recovery | Corruption-changed cases ending at the clean reference risk / all corruption-changed cases; abstention is not recovery. |
+| Trajectory safe completion | Correct issued decisions plus abstentions / all Test evaluations; failed runs are not safe abstentions. |
+
+These should be reported alongside coverage, selective error, logical agent calls, API attempts, and timing when the original private score artifact is available. Do not substitute reconstructed or invented numeric values.
+
 The three seeds are repeated evaluations of the same cases, not three independent datasets. The reported variability is descriptive and does not establish statistical significance.
 
 ## M4–M6 Evidence
 
 - **M4 (C4.1–C4.3):** 10/10 live Gemini smoke calls, 40/40 Validation evaluations, a working Single-Agent baseline, and successful clean-clone offline tests.
 - **M5 (C5.1–C5.4):** 30 golden test cases; 90 primary and 27 clean-reference Single-Agent runs (117/117 completed); automated scoring, three-seed variance, and trajectory-safe completion (64.44%).
-- **M6 (C6.1–C6.4):** Three specialists and one coordinator, matched cases and seeds, 117 recorded treatment runs (116 completed; one `INVALID_REPORT` failure), variance, cost/latency measures, and trace-based failure analysis.
+- **M6 (C6.1–C6.4):** Three specialists and one coordinator, matched cases and seeds, 117 recorded treatment run keys (116 completed; one `INVALID_REPORT` failure), variance, cost/latency measures, and trace-based failure analysis. The failed run remains in the Test denominator and is neither a successful decision nor a safe abstention.
 
 All incorrect issued decisions were over-escalations relative to reconstructed reference labels. Verification did not correct the HIGH risk prediction in case HJ-T028.
 
@@ -196,6 +214,10 @@ The public repository alone is insufficient to independently reproduce the exact
 
 Do not upload private traces, raw model responses, gold labels, API keys, or frozen checkpoints to the public repository.
 
+## Historical Contract Status
+
+`CONTRACT.md` records the original G0–G4 implementation contract and explicitly predates the G5 freeze and later M4–M6 execution. Its historical pending-status wording should not be interpreted as the current execution status. The original frozen G5 manifest and private execution evidence, rather than a retrospective edit to that historical contract, are the sources for the recorded experimental configuration.
+
 ## Limitations
 
 - The study uses simulated Hajj crowd-management data and reconstructed proxy reference labels, not verified real-world safety outcomes.
@@ -204,6 +226,7 @@ Do not upload private traces, raw model responses, gold labels, API keys, or fro
 - Repeated seeds on the same cases do not represent independent datasets.
 - The Multi-Agent condition had one recorded failed test run.
 - Incomplete token usage metadata prevents a complete monetary cost comparison.
+- Recorded execution-time measurements include architecture-specific orchestration and checkpoint-persistence overhead; they are not a pure provider-latency benchmark.
 - No statistical significance claim is made from the three-seed descriptive results.
 
 The results do not establish real-world safety performance.
