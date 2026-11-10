@@ -122,6 +122,19 @@ Percentages and per-case measures use mean ± sample SD across three seeds; corr
 
 **Timing qualification:** Recorded execution time measures the observed workflow rather than pure model service latency. The Multi-Agent path persists per-call checkpoints within the measured interval, so orchestration and file-I/O overhead are not matched exactly across conditions. Provider service time and full recorded execution time are separate metrics in the private scoring artifact.
 
+### Recorded Token Cost per Task
+
+Token counts below are from the original saved private M6 score artifact, `artifacts/g7/m6_scores.json`. They cover **90 primary Test evaluations per condition** (30 cases × three seeds), **excluding** the separately recorded clean-reference evaluation overhead. Only aggregate figures are shown; no private traces or gold labels are published.
+
+| Token-cost metric | Single-Agent | Multi-Agent |
+|---|---:|---:|
+| Recorded total tokens, primary Test runs | 80,700 | 212,036 |
+| Recorded tokens per task (total / 90) | 896.67 | ≥ 2,355.96 |
+| API attempts missing token usage | 0 | 42 |
+| Complete provider token usage? | Yes, in saved records | No |
+
+**Interpretation:** The Multi-Agent value is a **lower bound on recorded token consumption**, not a complete per-task cost: 42 API attempts lack usable token-usage metadata. Thus the observed token totals cannot establish the exact cost ratio or monetary cost of the two conditions. The Single-Agent figure is complete with respect to the recorded provider usage fields. Do not treat the Multi-Agent lower bound as an exact total or infer prices without an applicable provider rate card. Clean-reference calls are evaluation overhead and are not included in this per-task table.
+
 A complete monetary cost was unavailable because 42 Multi-Agent attempts had incomplete token usage metadata.
 
 ### Results Interpretation
