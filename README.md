@@ -181,6 +181,32 @@ The three seeds are repeated evaluations of the same cases, not three independen
 
 All incorrect issued decisions were over-escalations relative to reconstructed reference labels. Verification did not correct the HIGH risk prediction in case HJ-T028.
 
+### Failure Analysis by Condition
+
+The following descriptive counts and examples come from the original saved M6 paired scoring evidence. They compare issued risk levels with **programmatic proxy reference labels**, not independently validated real-world Hajj risk outcomes. The 90 primary evaluations in each condition are the same 30 Test cases repeated over seeds 11, 42, and 77.
+
+| Outcome (primary Test evaluations) | Single-Agent | Multi-Agent |
+|---|---:|---:|
+| Correct issued decisions | 37 | 31 |
+| Incorrect issued decisions | 32 | 43 |
+| Abstentions | 21 | 15 |
+| Failed runs | 0 | 1 |
+| Total evaluations | 90 | 90 |
+
+All incorrect **issued** decisions in the recorded scores were **over-escalations** relative to the proxy labels; this is an observed error pattern, not proof of the internal reason for any particular decision. Abstentions and the one failed run are distinct outcomes, not incorrect issued decisions.
+
+Examples from the saved paired comparisons:
+
+| Test case / seed | Proxy reference | Single-Agent | Multi-Agent | Observed contrast |
+|---|---|---|---|---|
+| `HJ-T028` / 11, 42, 77 | MEDIUM | MEDIUM (correct) | HIGH (incorrect) | Repeated Multi-Agent over-escalation; verification did not correct its HIGH output |
+| `HJ-T004` / 11, 42, 77 | Below HIGH | ABSTAIN | HIGH (incorrect) | Multi-Agent issued an over-escalated decision where Single-Agent abstained |
+| `HJ-T001` / 42 | — | ABSTAIN | FAILED | Coordinator structured-report validation failure; not a safe abstention |
+| `HJ-T005` / 77 | LOW | LOW (correct) | MEDIUM (incorrect) | Multi-Agent over-escalation on a clean case |
+| `HJ-T001` / 77 | MEDIUM | HIGH (incorrect) | ABSTAIN | Single-Agent over-escalation while Multi-Agent abstained |
+
+**Limits of causal interpretation:** The traces support comparing final outcomes, observed escalation patterns, verification behavior, and the recorded coordinator failure category. They do **not** establish a specific internal cause for every erroneous risk judgment. In the `INVALID_REPORT` case, the rejected coordinator response and exact validation-rule violation were not retained. The original G3 gold-label files remain necessary for independent verification of the proxy references; no missing cases or labels were reconstructed.
+
 ### Recorded Multi-Agent Failure
 
 One Multi-Agent test run, `HJ-T001` with seed 42, ended with `INVALID_REPORT`.
