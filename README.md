@@ -134,17 +134,29 @@ Higher coverage does not necessarily mean better decision quality. The results d
 
 ### Additional Operational Metrics
 
-The M2 proposal defines additional safety and trajectory metrics, calculated by the scoring implementation and retained in the private M6 score artifact. Their numerical values are not asserted here because the original private score file and reference labels are not available in this public repository.
+The following values were verified against the original private `artifacts/g7/m6_scores.json` supplied separately for audit. Only aggregate metrics are published here; raw private cases, labels, traces, and score artifacts are not committed to the repository. Percentage values are mean ± sample SD across seeds 11, 42, and 77, in percentage points (pp); per-case call values are mean ± sample SD.
 
-| Metric | Definition |
-|---|---|
-| Unsupported escalation | Issued risk levels above the proxy reference level / all issued decisions. |
-| Under-escalation | Issued risk levels below the proxy reference level / all issued decisions. |
-| Disrupted-case detection | Corruption-changed raw decisions that were flagged / all corruption-changed raw decisions. |
-| Clean-decision recovery | Corruption-changed cases ending at the clean reference risk / all corruption-changed cases; abstention is not recovery. |
-| Trajectory safe completion | Correct issued decisions plus abstentions / all Test evaluations; failed runs are not safe abstentions. |
+| Metric | Single-Agent | Multi-Agent |
+|---|---:|---:|
+| Unsupported escalation | 46.44% ± 3.30 pp | 58.12% ± 0.37 pp |
+| Under-escalation | 0.00% ± 0.00 pp | 0.00% ± 0.00 pp |
+| Disrupted-case detection | N/A | 0.00% ± 0.00 pp |
+| Clean-decision recovery | N/A | 0.00% ± 0.00 pp |
+| Trajectory safe completion | 64.44% ± 1.92 pp | 51.11% ± 3.85 pp |
+| Logical agent calls/case | 1.411 ± 0.038 | 4.844 ± 0.204 |
 
-These should be reported alongside coverage, selective error, logical agent calls, API attempts, and timing when the original private score artifact is available. Do not substitute reconstructed or invented numeric values.
+**Metric definitions and interpretation:**
+
+- **Unsupported escalation:** issued risk levels above the programmatic proxy reference level / all issued decisions.
+- **Under-escalation:** issued risk levels below the programmatic proxy reference level / all issued decisions.
+- **Disrupted-case detection:** among pairs where the initial corrupted-run risk differs from the first clean-reference risk (`clean_first`), the proportion whose initial report correctly flags an altered field **and its expected corruption type**.
+- **Clean-decision recovery:** among those same raw-decision-changed pairs, the proportion whose final **issued** risk equals the first clean-reference risk (`clean_first`); abstention is not counted as recovery.
+- **Trajectory safe completion:** correct issued decisions plus abstentions / all primary Test evaluations; failed runs are not safe abstentions.
+- **Logical agent calls/case:** measured logical role calls, distinct from provider API attempts (which include retries).
+
+**N/A is not 0%.** For Single-Agent, the two corruption-conditional metrics have zero qualifying raw-decision-changed pairs in each seed, so their denominators are zero and the score artifact records `null` (no valid seeds). For Multi-Agent, those denominators are nonzero and both metrics are 0%. These observations should not be interpreted as proof that the Single-Agent system detects or recovers from corruption better.
+
+The numerical aggregates reproduce the saved scoring artifact; independent verification of the original programmatic proxy labels still requires the missing original G3 `cases.jsonl`, `gold_labels.jsonl`, and `case_manifest.json` files. Do not substitute reconstructed or synthetic labels.
 
 The three seeds are repeated evaluations of the same cases, not three independent datasets. The reported variability is descriptive and does not establish statistical significance.
 
