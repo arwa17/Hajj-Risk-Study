@@ -25,6 +25,10 @@ FORBIDDEN_AGENT_TERMS = tuple(ALLOWED_MODEL_FEATURES) + ('Risk_Label', 'Operatio
 class ContractError(ValueError):
     """Malformed or out-of-contract case/report; never silently repair it."""
 
+    def __init__(self, message: str, *, code: str = "VALIDATION_FAILED"):
+        super().__init__(message)
+        self.code = code
+
 
 def _is_number(value: Any) -> bool:
     return isinstance(value, (float, int)) and not isinstance(value, bool) and math.isfinite(value)
@@ -100,19 +104,19 @@ def validate_case(case: Any) -> dict:
 
 def _validate_flags(flags: Any, allowed_fields: set[str]) -> list[dict]:
     if not isinstance(flags, list) or len(flags) > 7:
-        raise ContractError('evidence_flags must be a list with at most seven entries')
+        raise ContractError('evidence_flags must be a list with at most seven entries', code='INVALID_FLAGS_COUNT')
     seen = set()
     final = []
     for flag in flags:
         if not isinstance(flag, dict) or set(flag) != {'field', 'type', 'reason'}:
-            raise ContractError('Each flag must have field, type, reason only')
+            raise ContractError('Each flag must have field, type, reason only', code='INVALID_FLAG_STRUCTURE')
         if flag['field'] not in allowed_fields or flag['type'] not in FLAG_TYPES:
-            raise ContractError('Out-of-scope flag field or unknown type')
+            raise ContractError('Out-of-scope flag field or unknown type', code='INVALID_FLAG_VALUE')
         if not isinstance(flag['reason'], str) or not 1 <= len(flag['reason'].strip()) <= 400:
-            raise ContractError('A flag needs a short explicit reason')
+            raise ContractError('A flag needs a short explicit reason', code='INVALID_FLAG_REASON')
         key = (flag['field'], flag['type'])
         if key in seen:
-            raise ContractError('Duplicate flag; cannot inflate evidence insufficiency')
+            raise ContractError('Duplicate flag; cannot inflate evidence insufficiency', code='DUPLICATE_FLAG')
         seen.add(key)
         final.append({'field': flag['field'], 'type': flag['type'], 'reason': flag['reason'].strip()})
     return final
@@ -120,18 +124,18 @@ def _validate_flags(flags: Any, allowed_fields: set[str]) -> list[dict]:
 
 def _validate_evidence(evidence: Any) -> list[str]:
     if not isinstance(evidence, list) or not 1 <= len(evidence) <= 7:
-        raise ContractError('supporting_evidence must be a nonempty list (up to seven statements)')
+        raise ContractError('supporting_evidence must be a nonempty list (up to seven statements)', code='INVALID_EVIDENCE_COUNT')
     if not all(isinstance(value, str) and 1 <= len(value.strip()) <= 450 for value in evidence):
-        raise ContractError('Each evidence statement must be a short nonempty string')
+        raise ContractError('Each evidence statement must be a short nonempty string', code='INVALID_EVIDENCE_TEXT')
     return [value.strip() for value in evidence]
 
 
 def validate_final_report(report: Any, case_id: str) -> dict:
     required = {'case_id', 'proposed_risk_level', 'evidence_flags', 'supporting_evidence'}
     if not isinstance(report, dict) or set(report) != required or report.get('case_id') != case_id:
-        raise ContractError('Final report schema or case_id mismatch')
+        raise ContractError('Final report schema or case_id mismatch', code='FINAL_REPORT_SCHEMA_MISMATCH')
     if report['proposed_risk_level'] not in RISK_LEVELS:
-        raise ContractError('Generalist/Coordinator must propose a known risk level')
+        raise ContractError('Generalist/Coordinator must propose a known risk level', code='INVALID_RISK_LEVEL')
     validated = {
         'case_id': case_id,
         'proposed_risk_level': report['proposed_risk_level'],

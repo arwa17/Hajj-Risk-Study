@@ -98,7 +98,7 @@ def coordinator_messages(case_id, specialist_reports, shared_ml_prediction):
               + _guidance(FIELD_GUIDE) + '\n'
               'Return strictly the same final JSON schema as the generalist: case_id, '
               'proposed_risk_level, evidence_flags (field,type,reason), supporting_evidence. '
-              'Use evidence supplied by specialists; do not invent observations. '
+              'Return exactly four JSON keys and no extra keys. The case_id must match the supplied case_id exactly. Use 0-7 evidence flags, each containing only field, type and reason. Each reason must contain 1-400 characters after trimming whitespace. Do not duplicate the same field and type combination. Provide 1-7 supporting evidence statements, each containing 1-450 characters after trimming whitespace. Use evidence supplied by specialists; do not invent observations. '
               'A separate fixed policy handles final issue, verification or abstention.')
     payload = {'case_id': case_id, 'specialist_reports': specialist_reports,
                'shared_ml_prediction': shared_ml_prediction}
